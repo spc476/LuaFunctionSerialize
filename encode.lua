@@ -30,7 +30,7 @@ function cbor.TAG.___LuaGlobal(value,sref,stref)
   return cbor_c.encode(0xC0,2001) .. cbor.encode(value)
 end
 
-cbor.__ENCODE_MAP['function'] = function(f,sref,stref)
+function cbor.TAG.___LuaFunction(f,sref,stref)
   if sref[f] then
     return cbor_c.encode(0xC0,2000)
         .. cbor.TYPE.UINT(sref[f])
@@ -68,6 +68,10 @@ cbor.__ENCODE_MAP['function'] = function(f,sref,stref)
   end
 
   return blob
+end
+
+cbor.__ENCODE_MAP['function'] = function(f,sref,stref)
+  return cbor.TAG.___LuaFunction(f,sref,stref)
 end
 
 -- ***********************************************************************
