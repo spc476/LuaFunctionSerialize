@@ -27,8 +27,25 @@ local lua51  = require "lua51"
 -- ***********************************************************************
 
 function cbor.TAG.___LuaGlobal(value,sref,stref)
-  return cbor_c.encode(0xC0,2001) .. cbor.encode(value)
+  return cbor_c.encode(0xC0,2001) .. cbor.encode(value,sref,stref)
 end
+
+-- ***********************************************************************
+-- CBOR tag ___LuaFunction (2000)
+--      CBORtype(value) == true
+--              function is its own upvalue
+--      CBORtype(value) == UINT
+--              Reference to previously defined function
+--      CBORtype(value) == ARRAY[3]
+--              value[1] == BIN, Lua bytecode
+--              value[2] == ARRAY, upvalues for given function
+--              value[3] == ARRAY or ___LuaGlobal, environment for function
+--
+-- NOTE: value[3] is right now assumed to be ___LuaGlobal("_G")
+--
+-- Also, the tag value here are not allocated for this purpose, and may
+-- conflict with future extentions.
+-- ***********************************************************************
 
 function cbor.TAG.___LuaFunction(f,sref,stref)
   if sref[f] then
@@ -38,14 +55,14 @@ function cbor.TAG.___LuaFunction(f,sref,stref)
   
   table.insert(sref,f)
   sref[f] = #sref - 1
-          
+  
   local info = debug.getinfo(f)
   
   local blob = cbor_c.encode(0xC0,2000)
                .. cbor.TYPE.ARRAY(3)
                   .. cbor.TYPE.BIN(string.dump(f))
                   .. cbor.TYPE.ARRAY(info.nups)
-  
+                  
   for i = 1 , info.nups do
     local _,v = debug.getupvalue(f,i)
     
@@ -66,9 +83,11 @@ function cbor.TAG.___LuaFunction(f,sref,stref)
   else
     blob = blob .. cbor.TYPE.ARRAY(0)
   end
-
+  
   return blob
 end
+
+-- ***********************************************************************
 
 cbor.__ENCODE_MAP['function'] = function(f,sref,stref)
   return cbor.TAG.___LuaFunction(f,sref,stref)
@@ -96,7 +115,7 @@ local fun = (function(f)
                     end
                     return target
                   end)
-
+                  
 -- ***********************************************************************
 
 local x = cbor.encode(fun,{})

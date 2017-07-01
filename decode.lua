@@ -23,9 +23,25 @@
 local cbor  = require "org.conman.cbor"
 local lua51 = require "lua51"
 
+-- ***********************************************************************
+
 local function throw(pos,...)
   error( { pos = pos , msg = string.format(...) } , 2)
 end
+
+-- ***********************************************************************
+-- CBOR tag ___LuaFunction (2000)
+--      CBORtype(value) == true
+--              function is its own upvalue.  The local variable self is
+--              is used to denote this state when setting the upvals of
+--              the function.
+--      CBORtype(value) == UINT
+--              Reference to previously defined function
+--      CBORtype(value) == ARRAY[3]
+--              value[1] == BIN, Lua bytecode
+--              value[2] == ARRAY, upvalues for given function
+--              value[3] == ARRAY, environment for function
+-- ***********************************************************************
 
 local self = {}
 
@@ -34,7 +50,7 @@ cbor.TAG[2000] = function(packet,pos,conv,ref)
   
   if ctype == "true" then
     return self,npos,"___LuaFunction"
-  
+    
   elseif ctype == 'UINT' then
     value = value + 1
     if not ref.___LuaFunction[value] then
@@ -76,6 +92,8 @@ cbor.TAG[2000] = function(packet,pos,conv,ref)
   end
 end
 
+-- ***********************************************************************
+
 cbor.TAG[2001] = function(packet,pos,conv,ref)
   local value,npos,ctype = cbor.decode(packet,pos,conv,ref)
   if ctype ~= "TEXT" then
@@ -84,6 +102,8 @@ cbor.TAG[2001] = function(packet,pos,conv,ref)
     return lua51[value],npos,"___LuaGlobal"
   end
 end
+
+-- ***********************************************************************
 
 local f = io.open("blob.cbor","rb")
 local d = f:read("*a")
