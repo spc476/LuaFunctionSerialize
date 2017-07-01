@@ -16,9 +16,32 @@
 -- along with this library; if not, see <http://www.gnu.org/licenses/>.
 --
 -- Comments, questions and criticisms can be sent to: sean@conman.org
+-- ***************************************************************
+--
+-- luacheck: ignore 611
 --
 -- ***************************************************************
--- luacheck: ignore 611
+--
+-- I wanted to be really careful not to pollute the global space, nor did I
+-- want to create a location variable to hold the function, only to return
+-- it.
+--
+-- The first function (function(f)) is the Y-combinator, which allows one to
+-- create a recursive anonymous function.  We then use it to create our
+-- recursive anonymous function that does a rather deep copy of a table.
+-- And once created, we call it on the global space.
+--
+-- Basically, we're doing:
+--
+--      local Y = function(f) ... end
+--      local x = Y(function(self,target,src,label) ... end
+--      return x({},_G,"")
+--
+-- Only without creating the local variables.
+--
+-- Yes, I'm being cute here.
+--
+-- ***************************************************************
 
 return ((function(f)
            local function g(...) return f(g,...) end
