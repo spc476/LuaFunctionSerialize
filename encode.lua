@@ -26,6 +26,10 @@ local lua51  = require "lua51"
 
 -- ***********************************************************************
 
+function cbor.TAG.___LuaGlobal(value,sref,stref)
+  return cbor_c.encode(0xC0,2001) .. cbor.encode(value)
+end
+
 cbor.__ENCODE_MAP['function'] = function(f,sref,stref)
   if sref[f] then
     return cbor_c.encode(0xC0,2000)
@@ -50,8 +54,7 @@ cbor.__ENCODE_MAP['function'] = function(f,sref,stref)
                   .. cbor.encode(true)
                   
     elseif lua51[v] then
-      blob = blob .. cbor_c.encode(0xC0,2001)
-                  .. cbor.encode(lua51[v])
+      blob = blob .. cbor.TAG.___LuaGlobal(lua51[v],sref,stref)
     else
       blob = blob .. cbor.encode(v,sref,stref)
     end
@@ -59,8 +62,7 @@ cbor.__ENCODE_MAP['function'] = function(f,sref,stref)
   
   local env = getfenv(f)
   if lua51[env] then
-    blob = blob .. cbor_c.encode(0xC0,2001)
-                .. cbor.encode(lua51[env])
+    blob = blob .. cbor.TAG.___LuaGlobal(lua51[env],sref,stref)
   else
     blob = blob .. cbor.TYPE.ARRAY(0)
   end
