@@ -1,0 +1,11 @@
+
+  This is a quick-and-dirty proof-of-concept of serializing Lua 5.1
+functions using CBOR.  The issue here is not only obtaining the bytecode
+(via string.dump()) but also serializing the upvalues and environment (the
+"global" space if it where) of the function.
+
+  This is not meant for production.  This is for experimental purposes only.
+
+  You have been warned.
+
+  
